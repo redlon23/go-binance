@@ -4,14 +4,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"github.com/redlon23/go-binance/models"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,13 +16,17 @@ import (
 	"time"
 )
 
-var (
+const (
 	// ====== URL & END POINTS ======
-	baseURL            = "https://fapi.binance.com"
+	mainNetBaseURL     = "https://fapi.binance.com"
 	testNetBaseURL     = "https://testnet.binancefuture.com"
+
 	ticker24HrEndPoint = "/fapi/v1/ticker/24hr"
-	ListenEndPoint     = "/fapi/v1/listenKey"
-	OrderEndPoint	   = "/fapi/v1/order"
+	listenKeyEndPoint     = "/fapi/v1/listenKey"
+	orderEndPoint	   = "/fapi/v1/order"
+	exchangeInformationEndPoint = "/fapi/v1/exchangeInfo"
+	orderBookEndpoint = "/fapi/v1/depth"
+
 
 	// ====== Parameter Types ======
 	SideBuy 			= "BUY"
@@ -35,6 +36,8 @@ var (
 	OrderTypeMarket 	= "MARKET"
 	GoodTillCancel 		= "GTC"
 	GoodTillCrossing 	= "GTX"
+
+	DefaultOrderBookLimit = 500
 )
 
 
@@ -77,7 +80,7 @@ func (bfa *BinanceFuturesApi) NewNetClientHTTP2() {
 }
 
 func(bfa *BinanceFuturesApi) UseMainNet() {
-	bfa.BaseUrl = baseURL
+	bfa.BaseUrl = mainNetBaseURL
 }
 func(bfa *BinanceFuturesApi) UseTestNet() {
 	bfa.BaseUrl = testNetBaseURL
@@ -104,162 +107,141 @@ func (bfa BinanceFuturesApi) getSha256Signature(parameters string) (string, erro
 func (bfa BinanceFuturesApi) parseResponseBody(body io.ReadCloser) ([]byte, error) {
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		log.Println("Something went wrong during reading request body, ", err)
+		bfa.Logger.Println("Something went wrong during reading request body, ", err)
 	}
-	return data, err
+	return data, nil
 }
 
-// 	Contains weighted average price (wvap)
-func (bfa BinanceFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) []byte {
-	fullURL := bfa.BaseUrl + ticker24HrEndPoint + "?symbol=" + symbol
-	request, err := http.NewRequest("GET", fullURL, nil)
-
-	if err != nil {
-		log.Println(err)
+func (bfa BinanceFuturesApi) doPublicRequest(httpVerb, endPoint string, parameters url.Values) ([]byte, error) {
+	fullURL := bfa.BaseUrl + endPoint
+	if parameters != nil {
+		fullURL += "?" + parameters.Encode()
 	}
-
+	request, _ := http.NewRequest(httpVerb, fullURL, nil)
 	response, err := bfa.Client.Do(request)
 	if err != nil {
-		panic(err)
+		// Failure to speak HTTP - Connectivity error
+		// Non 2XX status does not produce errors
+		bfa.Logger.Error("Connectivity error while Client.Do ", err)
+		return nil, err
 	}
+	// Log rate limit for debug purposes
+	// Even if request results in non 2xx status it provides
+	// rate limit information
+	bfa.Logger.Println(endPoint + ", rate limit used: ",
+		response.Header.Get("X-Mbx-Used-Weight-1m"))
+
 	data, err := bfa.parseResponseBody(response.Body)
 	if err != nil {
-		panic(err)
-	}
-	err = response.Body.Close()
-	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return data
+	// Non 2xx status does not return error
+	if response.StatusCode != 200 {
+		err = &RequestError{
+			StatusCode: response.StatusCode,
+			UrlUsed: 	fullURL,
+			Message:   	string(data),
+		}
+		bfa.Logger.Error(endPoint, err.Error())
+		return nil, err
+	}
+	return data, nil
 }
 
-func (bfa BinanceFuturesApi) GetWvap(symbol string) models.Wvap {
-	data := bfa.Get24HourTickerPriceChangeStatistics(symbol)
-	wvap := new(models.Wvap)
-	err := json.Unmarshal(data, &wvap)
+func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, parameters url.Values) ([]byte, error) {
+	signature := bfa.signParameters(&parameters)
+	headers := make(http.Header)
+	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
+	fullURL := bfa.BaseUrl + endPoint + "?" + parameters.Encode() +"&signature=" + signature
+	request, _ := http.NewRequest(httpVerb, fullURL, nil)
+	request.Header = headers
+	response, err := bfa.Client.Do(request)
 	if err != nil {
-		log.Println(err)
+		// Failure to speak HTTP - Connectivity error
+		// Non 2XX status does not produce errors
+		bfa.Logger.Error("Connectivity error while Client.Do ", err)
+		return nil, err
 	}
-	return *wvap
+	// Log rate limit for debug purposes
+	// Even if request results in non 2xx status it provides
+	// rate limit information
+	bfa.Logger.Println(endPoint + ", rate limit used: ",
+		response.Header.Get("X-Mbx-Used-Weight-1m"))
+
+	data, err := bfa.parseResponseBody(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Non 2xx status does not return error
+	if response.StatusCode != 200 {
+		err = &RequestError{
+			StatusCode: response.StatusCode,
+			UrlUsed: 	fullURL,
+			Message:   	string(data),
+		}
+		bfa.Logger.Error(endPoint, err.Error())
+		return nil, err
+	}
+	return data, nil
 }
+
+// ======================= PUBLIC API CALLS ================================
+
+// 	Contains weighted average price (wvap)
+func (bfa BinanceFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	return bfa.doPublicRequest("GET", ticker24HrEndPoint, parameters)
+}
+
+func (bfa BinanceFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error)  {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("limit", fmt.Sprintf("%d", limit))
+	return bfa.doPublicRequest("GET", orderBookEndpoint, parameters)
+}
+
+func(bfa BinanceFuturesApi) GetExchangeInformation() ([]byte, error) {
+	return bfa.doPublicRequest("GET", exchangeInformationEndPoint, nil)
+}
+
+// ======================= SIGNED API CALLS ================================
 
 func (bfa BinanceFuturesApi) GetUserStreamKey() ([]byte, error) {
-	fullUrl := bfa.BaseUrl  + ListenEndPoint + "?"
-	parameters := url.Values{}
-	signature := bfa.signParameters(&parameters)
-	headers := make(http.Header)
-	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
-	requestUrl := fullUrl + "signature=" + signature
-	req, err := http.NewRequest("POST", requestUrl, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header = headers
-	response, err := bfa.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	data, _ := bfa.parseResponseBody(response.Body)
-	return data, nil
-}
-
-func (bfa BinanceFuturesApi) KeepAliveUserStream() ([]byte, error) {
-	fullUrl := bfa.BaseUrl  + ListenEndPoint + "?"
-	parameters := url.Values{}
-	signature := bfa.signParameters(&parameters)
-	headers := make(http.Header)
-	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
-	requestUrl := fullUrl + "signature=" + signature
-	req, err := http.NewRequest("PUT", requestUrl, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header = headers
-	response, err := bfa.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	data, _ := bfa.parseResponseBody(response.Body)
-	return data, nil
+	return bfa.doSignedRequest("POST", listenKeyEndPoint, url.Values{})
 }
 
 func (bfa BinanceFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64) ([]byte, error) {
-	fullUrl := bfa.BaseUrl  + OrderEndPoint + "?"
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCancel)
-	// TODO: Price and quantity precision must be dynamic, it is based on each symbol.
-	parameters.Add("quantity", fmt.Sprintf("%.3f", qty))
-	parameters.Add("price", fmt.Sprintf("%.2f", price))
-	signature := bfa.signParameters(&parameters)
-	headers := make(http.Header)
-	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
-	// Include parameters in the request url
-	requestUrl := fullUrl + parameters.Encode() +"&signature=" + signature
-	req, err := http.NewRequest("POST", requestUrl, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header = headers
-	response, err := bfa.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	data, _ := bfa.parseResponseBody(response.Body)
-	return data, nil
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
+	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 
 func (bfa BinanceFuturesApi) PlacePostOnlyLimitOrder(symbol, side string, price, qty float64) ([]byte, error) {
-	fullUrl := bfa.BaseUrl  + OrderEndPoint + "?"
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCrossing)
-	// TODO: Price and quantity precision must be dynamic, it is based on each symbol.
-	parameters.Add("quantity", fmt.Sprintf("%.3f", qty))
-	parameters.Add("price", fmt.Sprintf("%.2f", price))
-	signature := bfa.signParameters(&parameters)
-	headers := make(http.Header)
-	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
-	requestUrl := fullUrl + parameters.Encode() +"&signature=" + signature
-	req, err := http.NewRequest("POST", requestUrl, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header = headers
-	response, err := bfa.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	data, _ := bfa.parseResponseBody(response.Body)
-	return data, nil
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
+	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 
 func (bfa BinanceFuturesApi) PlaceMarketOrder(symbol, side string, qty float64) ([]byte, error) {
-	fullUrl := bfa.BaseUrl  + OrderEndPoint + "?"
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeMarket)
-	// TODO: Price and quantity precision must be dynamic, it is based on each symbol.
-	parameters.Add("quantity", fmt.Sprintf("%.3f", qty))
-	signature := bfa.signParameters(&parameters)
-	headers := make(http.Header)
-	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
-	requestUrl := fullUrl + parameters.Encode() +"&signature=" + signature
-	req, err := http.NewRequest("POST", requestUrl, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header = headers
-	response, err := bfa.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	data, _ := bfa.parseResponseBody(response.Body)
-	return data, nil
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
+
+

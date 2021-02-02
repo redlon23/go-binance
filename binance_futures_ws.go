@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var (
+const (
 	baseNetWSURL        	= "wss://fstream.binance.com/ws/"
 	testNetWSURL			= "wss://stream.binancefuture.com/ws/"
 	liquidationStreamName 	= "forceOrder"

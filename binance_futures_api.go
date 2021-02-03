@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
@@ -138,10 +139,15 @@ func (bfa BinanceFuturesApi) doPublicRequest(httpVerb, endPoint string, paramete
 
 	// Non 2xx status does not return error
 	if response.StatusCode != 200 {
+		bem := new(BinanceErrorMessage)
+		err = json.Unmarshal(data, &bem)
+		if err != nil {
+			bem = nil
+		}
 		err = &RequestError{
 			StatusCode: response.StatusCode,
 			UrlUsed: 	fullURL,
-			Message:   	string(data),
+			Message:   	*bem,
 		}
 		bfa.Logger.Error(endPoint, err.Error())
 		return nil, err
@@ -176,10 +182,15 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 
 	// Non 2xx status does not return error
 	if response.StatusCode != 200 {
+		bem := new(BinanceErrorMessage)
+		err = json.Unmarshal(data, &bem)
+		if err != nil {
+			bem = nil
+		}
 		err = &RequestError{
 			StatusCode: response.StatusCode,
 			UrlUsed: 	fullURL,
-			Message:   	string(data),
+			Message:   	*bem,
 		}
 		bfa.Logger.Error(endPoint, err.Error())
 		return nil, err

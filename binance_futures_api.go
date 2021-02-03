@@ -27,7 +27,8 @@ const (
 	orderEndPoint	   = "/fapi/v1/order"
 	exchangeInformationEndPoint = "/fapi/v1/exchangeInfo"
 	orderBookEndpoint = "/fapi/v1/depth"
-
+	futuresAccountBalanceEndpoint = "/fapi/v2/balance"
+	accountInformationEndpoint = "/fapi/v2/account"
 
 	// ====== Parameter Types ======
 	SideBuy 			= "BUY"
@@ -255,4 +256,10 @@ func (bfa BinanceFuturesApi) PlaceMarketOrder(symbol, side string, qty float64) 
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 
+func (bfa BinanceFuturesApi) GetAccountBalance() ([]byte, error) {
+	return bfa.doSignedRequest("GET", futuresAccountBalanceEndpoint, url.Values{})
+}
 
+func (bfa BinanceFuturesApi) GetAccountInformation() ([]byte, error) {
+	return bfa.doSignedRequest("GET", accountInformationEndpoint, url.Values{})
+}

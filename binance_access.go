@@ -83,6 +83,7 @@ func (ba *BinanceAccess) PrepareLoggers() {
 	}
 }
 
+
 func(ba *BinanceAccess) PrepareAccess() {
 	fmt.Println("HTTP/2.0 Client Preparing...")
 	ba.Api.NewNetClientHTTP2()
@@ -94,6 +95,8 @@ func(ba *BinanceAccess) PrepareAccess() {
 	fmt.Println("Success!")
 }
 
+// Uses http2 client then opens a websocket connection
+// Handles listen key generation and enables user stream
 func(ba *BinanceAccess) PrepareAccessWithUserStream() {
 	fmt.Println("HTTP/2.0 Client Preparing...")
 	ba.Api.NewNetClientHTTP2()

@@ -225,6 +225,18 @@ func (bfa BinanceFuturesApi) GetUserStreamKey() ([]byte, error) {
 	return bfa.doSignedRequest("POST", listenKeyEndPoint, url.Values{})
 }
 
+// Keepalive a user data stream to prevent a time out. User data streams will close after 60 minutes.
+// It's recommended to send a ping about every 60 minutes.
+// returns no information, it is completely fine to ignore the byte slice
+func (bfa BinanceFuturesApi) UpdateKeepAliveUserStream() ([]byte, error) {
+	return  bfa.doSignedRequest("PUT", listenKeyEndPoint, url.Values{})
+}
+
+// returns no information, it is completely fine to ignore the byte slice
+func (bfa BinanceFuturesApi) DeleteUserStream() ([]byte, error) {
+	return  bfa.doSignedRequest("DELETE", listenKeyEndPoint, url.Values{})
+}
+
 func (bfa BinanceFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)

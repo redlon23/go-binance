@@ -54,3 +54,16 @@ type StreamSymbolTickerUpdate struct {
 	Price float64 `json:"c,string"`
 	Wvap float64 `json:"w,string"`
 }
+
+type LiquidationOrder struct {
+	LiquidationInformation struct{
+		Symbol 				string  `json:"s"`
+		Side 				string  `json:"S"`
+		Type 				string  `json:"o"`
+		OriginalQuantity	float64 `json:"q,string"`
+		AccumulatedQuantity float64 `json:"Q,string"`
+		ExecutionStatus  	string  `json:"X"`
+		ExecutionType 	 	string  `json:"x"`
+		ClientId 		 	string  `json:"c"`
+	} `json:"o"`
+}

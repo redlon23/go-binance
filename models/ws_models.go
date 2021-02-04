@@ -55,15 +55,17 @@ type StreamSymbolTickerUpdate struct {
 	Wvap float64 `json:"w,string"`
 }
 
+type LiquidationInformation struct{
+	Symbol 				string  `json:"s"`
+	Side 				string  `json:"S"`
+	Type 				string  `json:"o"`
+	OriginalQuantity	float64 `json:"q,string"`
+	AccumulatedQuantity float64 `json:"Q,string"`
+	ExecutionStatus  	string  `json:"X"`
+	ExecutionType 	 	string  `json:"x"`
+	ClientId 		 	string  `json:"c"`
+}
+
 type LiquidationOrder struct {
-	LiquidationInformation struct{
-		Symbol 				string  `json:"s"`
-		Side 				string  `json:"S"`
-		Type 				string  `json:"o"`
-		OriginalQuantity	float64 `json:"q,string"`
-		AccumulatedQuantity float64 `json:"Q,string"`
-		ExecutionStatus  	string  `json:"X"`
-		ExecutionType 	 	string  `json:"x"`
-		ClientId 		 	string  `json:"c"`
-	} `json:"o"`
+	Liquidation LiquidationInformation `json:"o"`
 }

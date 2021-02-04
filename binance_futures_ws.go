@@ -101,7 +101,3 @@ func (bfws BinanceFuturesWebSocket) SubscribeBookTickerStream(symbol string) err
 func (bfws BinanceFuturesWebSocket) SubscribeSymbolTickerStream(symbol string) error {
 	return bfws.SubscribeToStream(symbol, symbolTickerName)
 }
-
-func (bfws BinanceFuturesWebSocket) SubscribeLiquidationOrderStream(symbol string) error {
-	return bfws.SubscribeToStream(symbol, liquidationStreamName)
-}

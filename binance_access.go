@@ -83,7 +83,7 @@ func (ba *BinanceAccess) PrepareLoggers() {
 	}
 }
 
-func(ba BinanceAccess) PrepareAccess() {
+func(ba *BinanceAccess) PrepareAccess() {
 	fmt.Println("HTTP/2.0 Client Preparing...")
 	ba.Api.NewNetClientHTTP2()
 	fmt.Println("Websocket Connection opening...")

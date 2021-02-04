@@ -125,7 +125,6 @@ func (ba *BinanceAccess) TestUserStream(positionChannel, orderChannel, priceChan
 			if err != nil {
 				log.Println(err)
 				log.Println(meta)
-
 			}
 
 			if meta.Event == models.EventSymbolTicker {

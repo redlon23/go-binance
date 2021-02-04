@@ -6,6 +6,7 @@ const (
 	EventAccount      = "ACCOUNT_UPDATE"
 	EventOrder 		  = "ORDER_TRADE_UPDATE"
 	EventSymbolTicker = "24hrTicker"
+	EventLiquidation  =	"forceOrder"
 )
 
 // Used for sending subscribe and unsubscribe message in websocket

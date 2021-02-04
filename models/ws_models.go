@@ -1,6 +1,6 @@
 package models
 
-var (
+const (
 	ReasonOrder       = "ORDER"
 	ReasonFunding     = "FUNDING_FEE"
 	EventAccount      = "ACCOUNT_UPDATE"

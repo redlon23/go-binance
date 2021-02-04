@@ -61,7 +61,7 @@ func (bfws *BinanceFuturesWebSocket) OpenWebSocketConnection() error  {
 func (bfws *BinanceFuturesWebSocket) OpenWebSocketConnectionWithUserStream(listenKey string) error  {
 	connection, _, err := websocket.DefaultDialer.Dial(bfws.BaseUrl + listenKey, nil)
 	if err != nil {
-		log.Println("Default Dialer, had an error during initial dial, ", err)
+		bfws.Logger.Println("Default Dialer, had an error during initial dial, ", err)
 		return err
 	}
 	// -> The websocket server will send a ping frame every 5 minutes.
@@ -84,7 +84,7 @@ func (bfws BinanceFuturesWebSocket) SubscribeToStream(symbol, streamType string)
 	bfws.IncrementSubscribeIdCounter()
 	err := bfws.Connection.WriteJSON(subscribeMap)
 	if err != nil {
-		log.Println("Error has occurred while sending subscribe message through connection", err)
+		bfws.Logger.Println("Error has occurred while sending subscribe message through connection", err)
 		return err
 	}
 	return nil
@@ -100,4 +100,8 @@ func (bfws BinanceFuturesWebSocket) SubscribeBookTickerStream(symbol string) err
 
 func (bfws BinanceFuturesWebSocket) SubscribeSymbolTickerStream(symbol string) error {
 	return bfws.SubscribeToStream(symbol, symbolTickerName)
+}
+
+func (bfws BinanceFuturesWebSocket) SubscribeLiquidationOrderStream(symbol string) error {
+	return bfws.SubscribeToStream(symbol, liquidationStreamName)
 }

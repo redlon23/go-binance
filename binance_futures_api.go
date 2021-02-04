@@ -58,7 +58,7 @@ func (bfa *BinanceFuturesApi) SetApiKeys(public, secret string) {
 }
 
 func (bfa *BinanceFuturesApi) NewNetClient() {
-	// Todo: make sure timeout and handshake time out won't cause any problems.
+	// Todo: make sure timeout and handshake won't cause any problems.
 	var netTransport = &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout: 2 * time.Second,

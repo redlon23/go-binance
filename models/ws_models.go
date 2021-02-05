@@ -38,15 +38,17 @@ type StreamAccountUpdate struct {
 	} `json:"a"`
 }
 
+type StreamOrder struct {
+	Symbol 			string `json:"s"`
+	Side 			string `json:"S"`
+	Type 			string `json:"o"`
+	ExecutionStatus string `json:"X"`
+	ExecutionType 	string `json:"x"`
+	ClientId 		string `json:"c"`
+}
+
 type StreamOrderUpdate struct {
-	Order struct{
-		Symbol 			string `json:"s"`
-		Side 			string `json:"S"`
-		Type 			string `json:"o"`
-		ExecutionStatus string `json:"X"`
-		ExecutionType 	string `json:"x"`
-		ClientId 		string `json:"c"`
-	} `json:"o"`
+	OrderInformation StreamOrder `json:"o"`
 }
 
 type StreamSymbolTickerUpdate struct {

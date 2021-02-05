@@ -38,6 +38,8 @@ const (
 	OrderTypeMarket 	= "MARKET"
 	GoodTillCancel 		= "GTC"
 	GoodTillCrossing 	= "GTX"
+	OrderTypeStopMarket = "STOP_MARKET"
+	OrderTypeStop		= "STOP"
 
 	DefaultOrderBookLimit = 500
 )
@@ -237,34 +239,52 @@ func (bfa BinanceFuturesApi) DeleteUserStream() ([]byte, error) {
 	return  bfa.doSignedRequest("DELETE", listenKeyEndPoint, url.Values{})
 }
 
-func (bfa BinanceFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64) ([]byte, error) {
+func (bfa BinanceFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCancel)
+	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 
-func (bfa BinanceFuturesApi) PlacePostOnlyLimitOrder(symbol, side string, price, qty float64) ([]byte, error) {
+func (bfa BinanceFuturesApi) PlacePostOnlyLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCrossing)
+	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 
-func (bfa BinanceFuturesApi) PlaceMarketOrder(symbol, side string, qty float64) ([]byte, error) {
+func (bfa BinanceFuturesApi) PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeMarket)
+	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
+}
+
+// Generally used for trailing profit orders.
+// Binance only allows one stop market order to be active
+// after initial order any secondary orders will replace the first one.
+// In order to use this method as take profit tool
+// use the same side as your position side.
+func (bfa BinanceFuturesApi) PlaceStopMarketOrder(symbol, side string, stopPrice, qty float64) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("side", side)
+	parameters.Add("type", OrderTypeStopMarket)
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	parameters.Add("stopPrice", strconv.FormatFloat(stopPrice, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 

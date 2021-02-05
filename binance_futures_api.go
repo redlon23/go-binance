@@ -19,16 +19,17 @@ import (
 
 const (
 	// ====== URL & END POINTS ======
-	mainNetBaseURL     = "https://fapi.binance.com"
-	testNetBaseURL     = "https://testnet.binancefuture.com"
+	mainNetBaseURL     				= "https://fapi.binance.com"
+	testNetBaseURL     				= "https://testnet.binancefuture.com"
 
-	ticker24HrEndPoint = "/fapi/v1/ticker/24hr"
-	listenKeyEndPoint     = "/fapi/v1/listenKey"
-	orderEndPoint	   = "/fapi/v1/order"
-	exchangeInformationEndPoint = "/fapi/v1/exchangeInfo"
-	orderBookEndpoint = "/fapi/v1/depth"
-	futuresAccountBalanceEndpoint = "/fapi/v2/balance"
-	accountInformationEndpoint = "/fapi/v2/account"
+	ticker24HrEndPoint 				= "/fapi/v1/ticker/24hr"
+	listenKeyEndPoint     			= "/fapi/v1/listenKey"
+	orderEndPoint	   				= "/fapi/v1/order"
+	exchangeInformationEndPoint 	= "/fapi/v1/exchangeInfo"
+	orderBookEndpoint 				= "/fapi/v1/depth"
+	futuresAccountBalanceEndpoint 	= "/fapi/v2/balance"
+	accountInformationEndpoint 		= "/fapi/v2/account"
+	allOpenOrdersEndPoint 			= "/fapi/v1/allOpenOrders"
 
 	// ====== Parameter Types ======
 	SideBuy 			= "BUY"
@@ -203,7 +204,7 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 
 // ======================= PUBLIC API CALLS ================================
 
-// 	Contains weighted average price (wvap)
+// 	Contains weighted average price (vwap)
 func (bfa BinanceFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
@@ -286,6 +287,20 @@ func (bfa BinanceFuturesApi) PlaceStopMarketOrder(symbol, side string, stopPrice
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("stopPrice", strconv.FormatFloat(stopPrice, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
+}
+
+func (bfa BinanceFuturesApi) CancelSingleOrder(symbol, origClientOrderId string, orderId int64) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("orderId", strconv.FormatInt(orderId, 10))
+	parameters.Add("origClientOrderId", origClientOrderId)
+	return bfa.doSignedRequest("DELETE", orderEndPoint, parameters)
+}
+
+func (bfa BinanceFuturesApi) CancelAllOrders(symbol string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	return bfa.doSignedRequest("DELETE", allOpenOrdersEndPoint, parameters)
 }
 
 func (bfa BinanceFuturesApi) GetAccountBalance() ([]byte, error) {

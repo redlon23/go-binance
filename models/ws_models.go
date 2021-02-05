@@ -18,8 +18,8 @@ type LiveStream struct {
 
 // Identification meta for incoming websocket messages
 type StreamMetaMessage struct {
-	EventTime int `json:"E"`
-	Event string `json:"e"`
+	EventTime 		int `json:"E"`
+	Event 			string `json:"e"`
 	Reason struct {
 		MessageType string `json:"m"`
 	} `json:"a"`
@@ -52,10 +52,10 @@ type StreamOrderUpdate struct {
 }
 
 type StreamSymbolTickerUpdate struct {
-	Symbol string `json:"s"`
-	ChangePercent int `json:"C"`
-	Price float64 `json:"c,string"`
-	Wvap float64 `json:"w,string"`
+	Symbol 			string `json:"s"`
+	ChangePercent 	int `json:"C"`
+	Price 			float64 `json:"c,string"`
+	Wvap 			float64 `json:"w,string"`
 }
 
 type LiquidationInformation struct{

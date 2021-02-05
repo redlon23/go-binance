@@ -14,7 +14,7 @@ type Balance struct {
 
 type Vwap struct {
 	Symbol 		string 	 `json:"symbol"`
-	WVap 		float64	 `json:"weightedAvgPrice,string"`
+	Vwap 		float64	 `json:"weightedAvgPrice,string"`
 	LastPrice 	float64	 `json:"lastPrice,string"`
 }
 

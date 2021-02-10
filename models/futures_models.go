@@ -25,3 +25,25 @@ type OrderResponse struct {
 	Price 		float64 `json:"price,string"`
 	Quantity 	float64 `json:"origQty,string"`
 }
+
+type PriceFilter struct {
+	MaxPrice float64 `json:"maxPrice,string"`
+	MinPrice float64 `json:"minPrice,string"`
+	TickSize float64 `json:"tickSize,string"`
+}
+
+type LotFilter struct {
+	MaxQuantity float64 `json:"maxQty,string"`
+	MinQuantity float64 `json:"minQty,string"`
+	StepSize float64 	`json:"stepSize,string"`
+}
+
+
+type ExchangeSymbolInformation struct {
+	Symbol string `json:"symbol"`
+	Filters  []map[string]interface{} `json:"filters"`
+}
+
+type ExchangeInformation struct {
+	Symbols []ExchangeSymbolInformation `json:"symbols"`
+}

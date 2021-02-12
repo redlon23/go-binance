@@ -78,3 +78,23 @@ func (k *KlinesFrame) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type BookData struct {
+	Price 	float64
+	Quantity float64
+}
+
+type OrderBook struct {
+	Bids []BookData `json:"bids"`
+	Asks []BookData `json:"asks"`
+}
+
+func (bd *BookData) UnmarshalJSON(data []byte) error {
+	var v []interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		fmt.Printf("Error whilde decoding %v\n", err)
+		return err
+	}
+	bd.Price, _ = strconv.ParseFloat(v[0].(string), 64)
+	bd.Quantity, _ = strconv.ParseFloat(v[1].(string), 64)
+	return nil
+}

@@ -1,5 +1,11 @@
 package models
 
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+)
+
 type ListenKey struct {
 	Key string `json:"listenKey"`
 }
@@ -47,3 +53,28 @@ type ExchangeSymbolInformation struct {
 type ExchangeInformation struct {
 	Symbols []ExchangeSymbolInformation `json:"symbols"`
 }
+
+type KlinesFrame struct {
+	Open	float64
+	High  	float64
+	Low 	float64
+	Close 	float64
+	Volume 	float64
+}
+
+type Klines []KlinesFrame
+
+func (k *KlinesFrame) UnmarshalJSON(data []byte) error {
+	var v []interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		fmt.Printf("Error whilde decoding %v\n", err)
+		return err
+	}
+	k.Open, _ = strconv.ParseFloat(v[1].(string), 64)
+	k.High, _ = strconv.ParseFloat(v[2].(string), 64)
+	k.Low, _ = strconv.ParseFloat(v[3].(string), 64)
+	k.Close, _ = strconv.ParseFloat(v[4].(string), 64)
+	k.Volume, _ = strconv.ParseFloat(v[5].(string), 64)
+	return nil
+}
+

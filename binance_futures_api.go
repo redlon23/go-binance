@@ -27,6 +27,7 @@ const (
 	orderEndPoint	   				= "/fapi/v1/order"
 	exchangeInformationEndPoint 	= "/fapi/v1/exchangeInfo"
 	orderBookEndpoint 				= "/fapi/v1/depth"
+	klinesEndpoint					= "/fapi/v1/klines"
 	futuresAccountBalanceEndpoint 	= "/fapi/v2/balance"
 	accountInformationEndpoint 		= "/fapi/v2/account"
 	allOpenOrdersEndPoint 			= "/fapi/v1/allOpenOrders"
@@ -43,6 +44,14 @@ const (
 	OrderTypeStop		= "STOP"
 
 	DefaultOrderBookLimit = 500
+	DefaultKlineLimit     = 500
+
+	KlineInterval5Min 	= "1m"
+	KlineInterval15Min 	= "15m"
+	KlineInterval30Min 	= "30m"
+	KlineInterval1Hour 	= "1h"
+	KlineInterval4Hour 	= "4h"
+	KlineInterval8Hour 	= "8m"
 )
 
 
@@ -220,6 +229,14 @@ func (bfa BinanceFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, err
 
 func(bfa BinanceFuturesApi) GetExchangeInformation() ([]byte, error) {
 	return bfa.doPublicRequest("GET", exchangeInformationEndPoint, nil)
+}
+// limit can be just 1 if only current candle is needed.
+func(bfa BinanceFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("interval", interval)
+	parameters.Add("limit", fmt.Sprintf("%d", limit))
+	return bfa.doPublicRequest("GET", klinesEndpoint, parameters)
 }
 
 // ======================= SIGNED API CALLS ================================

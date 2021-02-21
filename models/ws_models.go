@@ -45,6 +45,7 @@ type StreamOrder struct {
 	ExecutionStatus string `json:"X"`
 	ExecutionType 	string `json:"x"`
 	ClientId 		string `json:"c"`
+	OrderId			int64 	`json:"i"`
 }
 
 type StreamOrderUpdate struct {

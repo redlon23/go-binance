@@ -1,12 +1,13 @@
 package models
 
 const (
-	ReasonOrder       = "ORDER"
-	ReasonFunding     = "FUNDING_FEE"
-	EventAccount      = "ACCOUNT_UPDATE"
-	EventOrder 		  = "ORDER_TRADE_UPDATE"
-	EventSymbolTicker = "24hrTicker"
-	EventLiquidation  =	"forceOrder"
+	ReasonOrder       	= "ORDER"
+	ReasonFunding     	= "FUNDING_FEE"
+	EventAccount      	= "ACCOUNT_UPDATE"
+	EventOrder 		  	= "ORDER_TRADE_UPDATE"
+	EventSymbolTicker 	= "24hrTicker"
+	EventLiquidation  	= "forceOrder"
+	OrderUpdateExpired 	= "EXPIRED"
 )
 
 // Used for sending subscribe and unsubscribe message in websocket

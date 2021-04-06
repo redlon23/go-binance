@@ -46,12 +46,20 @@ const (
 	DefaultOrderBookLimit = 500
 	DefaultKlineLimit     = 500
 
-	KlineInterval5Min 	= "1m"
+	KlineInterval1Min 	= "1m"
+	KlineInterval3Min 	= "3m"
+	KlineInterval5Min 	= "5m"
 	KlineInterval15Min 	= "15m"
 	KlineInterval30Min 	= "30m"
 	KlineInterval1Hour 	= "1h"
 	KlineInterval4Hour 	= "4h"
-	KlineInterval8Hour 	= "8m"
+	KlineInterval6Hour 	= "6h"
+	KlineInterval8Hour 	= "8h"
+	KlineInterval12Hour = "12h"
+	KlineIntervalDay = "1d"
+	KlineInterval3Day = "3d"
+	KlineIntervalWeek = "1w"
+	KlineIntervalMonth = "1M"
 )
 
 

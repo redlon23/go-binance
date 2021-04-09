@@ -299,7 +299,7 @@ func (bfa BinanceFuturesApi) PlaceMarketOrder(symbol, side string, qty float64, 
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 
-// Generally used for trailing profit orders.
+// PlaceStopMarketOrder Generally used for trailing profit orders.
 // Binance only allows one stop market order to be active
 // after initial order any secondary orders will replace the first one.
 // In order to use this method as take profit tool
@@ -309,8 +309,10 @@ func (bfa BinanceFuturesApi) PlaceStopMarketOrder(symbol, side string, stopPrice
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeStopMarket)
+	parameters.Add("reduceOnly", "true")
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("stopPrice", strconv.FormatFloat(stopPrice, 'f', -1, 64))
+
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }
 

@@ -1,62 +1,63 @@
 package go_binance
 
 import (
-
-	"fmt"
-	"github.com/redlon23/go-binance/models"
-	"github.com/sirupsen/logrus"
-	"log"
-	"os"
+"fmt"
+"github.com/redlon23/go-binance/models"
+"github.com/sirupsen/logrus"
+"log"
+"os"
 )
 
-type BinanceAccess struct {
-	Api BinanceFuturesApi
+
+
+type BinanceCoinAccess struct {
+	Api BinanceCoinFuturesApi
 	WebSocket BinanceFuturesWebSocket
 }
 
-func (ba *BinanceAccess) SetApiKeys(public, secret string) {
-	ba.Api.SetApiKeys(public, secret)
+func (bca *BinanceCoinAccess) SetApiKeys(public, secret string) {
+	bca.Api.SetApiKeys(public, secret)
 }
 
-func(ba *BinanceAccess) UseMainNet() {
-	ba.Api.UseMainNet()
-	ba.WebSocket.UseMainNet()
+func(bca *BinanceCoinAccess) UseMainNet() {
+	bca.Api.UseMainNet()
+	bca.WebSocket.UseMainNet()
 }
 
-func(ba *BinanceAccess) UseTestNet() {
-	ba.Api.UseTestNet()
-	ba.WebSocket.UseTestNet()
+func(bca *BinanceCoinAccess) UseTestNet() {
+	bca.Api.UseTestNet()
+	bca.WebSocket.UseTestNet()
 }
 
-func (ba *BinanceAccess) PrepareLoggers() {
-	ba.Api.Logger = logrus.New()
-	ba.WebSocket.Logger = logrus.New()
-	ba.Api.Logger.Formatter = new(logrus.JSONFormatter)
-	ba.WebSocket.Logger.Formatter = new(logrus.JSONFormatter)
+func (bca *BinanceCoinAccess) PrepareLoggers() {
+	bca.Api.Logger = logrus.New()
+	bca.WebSocket.Logger = logrus.New()
+	bca.Api.Logger.Formatter = new(logrus.JSONFormatter)
+	bca.WebSocket.Logger.Formatter = new(logrus.JSONFormatter)
 	// Check log folder and create if it doesn't exists
 	CheckLogsFolder()
 
 	apilogs, err := os.OpenFile("logs/binance_api.log", os.O_CREATE|os.O_WRONLY, 0666)
 	if err == nil {
-		ba.Api.Logger.SetOutput(apilogs)
+		bca.Api.Logger.SetOutput(apilogs)
 	} else {
 		fmt.Println("Failed to log to file for binance api calls, using default stderr")
 	}
 
 	wslogs, err := os.OpenFile("logs/binance_ws.log", os.O_CREATE|os.O_WRONLY, 0666)
 	if err == nil {
-		ba.WebSocket.Logger.SetOutput(wslogs)
+		bca.WebSocket.Logger.SetOutput(wslogs)
 	} else {
 		fmt.Println("Failed to log to file for binance websocket, using default stderr")
 	}
 }
 
 
-func(ba *BinanceAccess) PrepareAccess() {
+func(bca *BinanceCoinAccess) PrepareAccess() {
 	fmt.Println("HTTP/2.0 Client Preparing...")
-	ba.Api.NewNetClientHTTP2()
+	bca.Api.NewNetClientHTTP2()
 	fmt.Println("Websocket Connection opening...")
-	err := ba.WebSocket.OpenWebSocketConnection()
+	err := bca.WebSocket.OpenWebSocketConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,16 +66,16 @@ func(ba *BinanceAccess) PrepareAccess() {
 
 // Uses http2 client then opens a websocket connection
 // Handles listen key generation and enables user stream
-func(ba *BinanceAccess) PrepareAccessWithUserStream() {
+func(bca *BinanceCoinAccess) PrepareAccessWithUserStream() {
 	fmt.Println("HTTP/2.0 Client Preparing...")
-	ba.Api.NewNetClientHTTP2()
+	bca.Api.NewNetClientHTTP2()
 	fmt.Println("Websocket Connection (User Stream) opening...")
-	data, err := ba.Api.GetUserStreamKey()
+	data, err := bca.Api.GetUserStreamKey()
 	if err != nil {
 		log.Fatal(err)
 	}
 	listenKey := GetKey(data)
-	err = ba.WebSocket.OpenWebSocketConnectionWithUserStream(listenKey)
+	err = bca.WebSocket.OpenWebSocketConnectionWithUserStream(listenKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,10 +83,10 @@ func(ba *BinanceAccess) PrepareAccessWithUserStream() {
 }
 
 
-func (ba *BinanceAccess) TestUserStream(positionChannel, orderChannel, priceChannel chan []byte) {
-	_ = ba.WebSocket.SubscribeSymbolTickerStream("BTCUSDT")
+func (bca *BinanceCoinAccess) TestUserStream(positionChannel, orderChannel, priceChannel chan []byte) {
+	_ = bca.WebSocket.SubscribeSymbolTickerStream("BTCUSDT")
 	for {
-		_, message, err := ba.WebSocket.Connection.ReadMessage()
+		_, message, err := bca.WebSocket.Connection.ReadMessage()
 		if err != nil {
 			log.Println("Error occurred while reading message from the connection", err)
 		} else {

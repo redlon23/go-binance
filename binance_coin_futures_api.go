@@ -16,6 +16,10 @@ import (
 	"time"
 )
 
+const (
+	ticker24HrEndPointCoin = "/dapi/v1/ticker/24hr"
+)
+
 type BinanceCoinFuturesApi struct {
 	Client *http.Client
 	BaseUrl string
@@ -169,4 +173,19 @@ func (bcfa BinanceCoinFuturesApi) doSignedRequest(httpVerb, endPoint string, par
 		return nil, err
 	}
 	return data, nil
+}
+
+// 	Contains weighted average price (vwap)
+func (bcfa BinanceCoinFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	return bcfa.doPublicRequest("GET", ticker24HrEndPointCoin, parameters)
+}
+
+
+
+// ======================= SIGNED API CALLS ================================
+
+func (bcfa BinanceCoinFuturesApi) GetUserStreamKey() ([]byte, error) {
+	return bcfa.doSignedRequest("POST", listenKeyEndPoint, url.Values{})
 }

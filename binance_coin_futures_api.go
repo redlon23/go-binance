@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"io"
@@ -17,7 +18,12 @@ import (
 )
 
 const (
-	ticker24HrEndPointCoin = "/dapi/v1/ticker/24hr"
+	mainNetBaseURLCoin 		= "https://dapi.binance.com"
+	testNetBaseURLCoin 		= "https://testnet.binancefuture.com"
+	ticker24HrEndPointCoin 	= "/dapi/v1/ticker/24hr"
+	orderBookEndPointCoin 	= "/dapi/v1/depth"
+	exchangeInformationEndPointCoin 	= "/dapi/v1/exchangeInfo"
+	klinesEndpointCoin 	= "/dapi/v1/klines"
 )
 
 type BinanceCoinFuturesApi struct {
@@ -58,10 +64,10 @@ func (bcfa *BinanceCoinFuturesApi) NewNetClientHTTP2() {
 }
 
 func(bcfa *BinanceCoinFuturesApi) UseMainNet() {
-	bcfa.BaseUrl = mainNetBaseURL
+	bcfa.BaseUrl = mainNetBaseURLCoin
 }
 func(bcfa *BinanceCoinFuturesApi) UseTestNet() {
-	bcfa.BaseUrl = testNetBaseURL
+	bcfa.BaseUrl = testNetBaseURLCoin
 }
 
 // Adds timestamp and creates a signature according to binance rules
@@ -95,6 +101,7 @@ func (bcfa BinanceCoinFuturesApi) doPublicRequest(httpVerb, endPoint string, par
 	if parameters != nil {
 		fullURL += "?" + parameters.Encode()
 	}
+	fmt.Println(fullURL)
 	request, _ := http.NewRequest(httpVerb, fullURL, nil)
 	response, err := bcfa.Client.Do(request)
 	if err != nil {
@@ -175,6 +182,10 @@ func (bcfa BinanceCoinFuturesApi) doSignedRequest(httpVerb, endPoint string, par
 	return data, nil
 }
 
+func(bcfa BinanceCoinFuturesApi) GetExchangeInformation() ([]byte, error) {
+	return bcfa.doPublicRequest("GET", exchangeInformationEndPointCoin, nil)
+}
+
 // 	Contains weighted average price (vwap)
 func (bcfa BinanceCoinFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
 	parameters := url.Values{}
@@ -182,10 +193,27 @@ func (bcfa BinanceCoinFuturesApi) Get24HourTickerPriceChangeStatistics(symbol st
 	return bcfa.doPublicRequest("GET", ticker24HrEndPointCoin, parameters)
 }
 
+func (bcfa BinanceCoinFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error)  {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("limit", fmt.Sprintf("%d", limit))
+	return bcfa.doPublicRequest("GET", orderBookEndPointCoin, parameters)
+}
+
+// limit can be just 1 if only current candle is needed.
+func(bcfa BinanceCoinFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("interval", interval)
+	parameters.Add("limit", fmt.Sprintf("%d", limit))
+	return bcfa.doPublicRequest("GET", klinesEndpointCoin, parameters)
+}
+
 
 
 // ======================= SIGNED API CALLS ================================
 
 func (bcfa BinanceCoinFuturesApi) GetUserStreamKey() ([]byte, error) {
+	// todo change this end point, it was copied from futures api.
 	return bcfa.doSignedRequest("POST", listenKeyEndPoint, url.Values{})
 }

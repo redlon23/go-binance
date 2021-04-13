@@ -24,6 +24,7 @@ const (
 	orderBookEndPointCoin 	= "/dapi/v1/depth"
 	exchangeInformationEndPointCoin 	= "/dapi/v1/exchangeInfo"
 	klinesEndpointCoin 	= "/dapi/v1/klines"
+	listenKeyEndPointCoin 	= "/dapi/v1/listenKey"
 )
 
 type BinanceCoinFuturesApi struct {
@@ -209,11 +210,19 @@ func(bcfa BinanceCoinFuturesApi) GetKlines(symbol, interval string, limit int) (
 	return bcfa.doPublicRequest("GET", klinesEndpointCoin, parameters)
 }
 
-
-
 // ======================= SIGNED API CALLS ================================
-
 func (bcfa BinanceCoinFuturesApi) GetUserStreamKey() ([]byte, error) {
-	// todo change this end point, it was copied from futures api.
-	return bcfa.doSignedRequest("POST", listenKeyEndPoint, url.Values{})
+	return bcfa.doSignedRequest("POST", listenKeyEndPointCoin, url.Values{})
+}
+
+// Keepalive a user data stream to prevent a time out. User data streams will close after 60 minutes.
+// It's recommended to send a ping about every 60 minutes.
+// returns no information, it is completely fine to ignore the byte slice
+func (bcfa BinanceCoinFuturesApi) UpdateKeepAliveUserStream() ([]byte, error) {
+	return  bcfa.doSignedRequest("PUT", listenKeyEndPointCoin, url.Values{})
+}
+
+// returns no information, it is completely fine to ignore the byte slice
+func (bcfa BinanceCoinFuturesApi) DeleteUserStream() ([]byte, error) {
+	return  bcfa.doSignedRequest("DELETE", listenKeyEndPointCoin, url.Values{})
 }

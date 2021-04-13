@@ -25,6 +25,8 @@ const (
 	exchangeInformationEndPointCoin 	= "/dapi/v1/exchangeInfo"
 	klinesEndpointCoin 	= "/dapi/v1/klines"
 	listenKeyEndPointCoin 	= "/dapi/v1/listenKey"
+	orderEndPointCoin 	= "/dapi/v1/order"
+	allOpenOrdersEndPointCoin 	= "/dapi/v1/allOpenOrders"
 )
 
 type BinanceCoinFuturesApi struct {
@@ -225,4 +227,69 @@ func (bcfa BinanceCoinFuturesApi) UpdateKeepAliveUserStream() ([]byte, error) {
 // returns no information, it is completely fine to ignore the byte slice
 func (bcfa BinanceCoinFuturesApi) DeleteUserStream() ([]byte, error) {
 	return  bcfa.doSignedRequest("DELETE", listenKeyEndPointCoin, url.Values{})
+}
+
+func (bcfa BinanceCoinFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("side", side)
+	parameters.Add("type", OrderTypeLimit)
+	parameters.Add("timeInForce", GoodTillCancel)
+	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
+	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
+}
+
+func (bcfa BinanceCoinFuturesApi) PlacePostOnlyLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("side", side)
+	parameters.Add("type", OrderTypeLimit)
+	parameters.Add("timeInForce", GoodTillCrossing)
+	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
+	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
+}
+
+func (bcfa BinanceCoinFuturesApi) PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("side", side)
+	parameters.Add("type", OrderTypeMarket)
+	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
+}
+
+// PlaceStopMarketOrder Generally used for trailing profit orders.
+// Binance only allows one stop market order to be active
+// after initial order any secondary orders will replace the first one.
+// In order to use this method as take profit tool
+// use the same side as your position side.
+func (bcfa BinanceCoinFuturesApi) PlaceStopMarketOrder(symbol, side string, stopPrice, qty float64) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("side", side)
+	parameters.Add("type", OrderTypeStopMarket)
+	parameters.Add("reduceOnly", "true")
+	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
+	parameters.Add("stopPrice", strconv.FormatFloat(stopPrice, 'f', -1, 64))
+
+	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
+}
+
+func (bcfa BinanceCoinFuturesApi) CancelSingleOrder(symbol, origClientOrderId string, orderId int64) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("orderId", strconv.FormatInt(orderId, 10))
+	parameters.Add("origClientOrderId", origClientOrderId)
+	return bcfa.doSignedRequest("DELETE", orderEndPointCoin, parameters)
+}
+
+func (bcfa BinanceCoinFuturesApi) CancelAllOrders(symbol string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	return bcfa.doSignedRequest("DELETE", allOpenOrdersEndPointCoin, parameters)
 }

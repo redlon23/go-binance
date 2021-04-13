@@ -27,6 +27,8 @@ const (
 	listenKeyEndPointCoin 	= "/dapi/v1/listenKey"
 	orderEndPointCoin 	= "/dapi/v1/order"
 	allOpenOrdersEndPointCoin 	= "/dapi/v1/allOpenOrders"
+	futuresAccountBalanceEndpointCoin 	= "/dapi/v1/balance"
+	accountInformationEndpointCoin 	= "/dapi/v1/account"
 )
 
 type BinanceCoinFuturesApi struct {
@@ -292,4 +294,12 @@ func (bcfa BinanceCoinFuturesApi) CancelAllOrders(symbol string) ([]byte, error)
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	return bcfa.doSignedRequest("DELETE", allOpenOrdersEndPointCoin, parameters)
+}
+
+func (bcfa BinanceCoinFuturesApi) GetAccountBalance() ([]byte, error) {
+	return bcfa.doSignedRequest("GET", futuresAccountBalanceEndpointCoin, url.Values{})
+}
+
+func (bcfa BinanceCoinFuturesApi) GetAccountInformation() ([]byte, error) {
+	return bcfa.doSignedRequest("GET", accountInformationEndpointCoin, url.Values{})
 }

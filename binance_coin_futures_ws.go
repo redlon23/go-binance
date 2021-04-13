@@ -1,9 +1,12 @@
 package go_binance
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/redlon23/go-binance/models"
 	"github.com/sirupsen/logrus"
 	"log"
+	"strings"
 )
 
 const (
@@ -72,4 +75,29 @@ func (bcfws *BinanceCoinFuturesWebSocket) OpenWebSocketConnectionWithUserStream(
 	connection.SetPingHandler(nil)
 	bcfws.Connection = connection
 	return nil
+}
+
+// Subscribes to given symbol-stream type over provided connection
+func (bcfws BinanceCoinFuturesWebSocket) SubscribeToStream(symbol, streamType string) error {
+	parameter := fmt.Sprintf("%s@%s", strings.ToLower(symbol), streamType)
+	subscribeMap := models.LiveStream{Method: "SUBSCRIBE", Params: []string{parameter}, Id: bcfws.SubscribeIdCounter}
+	bcfws.IncrementSubscribeIdCounter()
+	err := bcfws.Connection.WriteJSON(subscribeMap)
+	if err != nil {
+		bcfws.Logger.Println("Error has occurred while sending subscribe message through connection", err)
+		return err
+	}
+	return nil
+}
+
+func (bcfws BinanceCoinFuturesWebSocket) SubscribeLiquidationStream(symbol string) error {
+	return bcfws.SubscribeToStream(symbol, liquidationStreamName)
+}
+
+func (bcfws BinanceCoinFuturesWebSocket) SubscribeBookTickerStream(symbol string) error {
+	return bcfws.SubscribeToStream(symbol, bookTickerSteamName)
+}
+
+func (bcfws BinanceCoinFuturesWebSocket) SubscribeSymbolTickerStream(symbol string) error {
+	return bcfws.SubscribeToStream(symbol, symbolTickerName)
 }

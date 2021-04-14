@@ -1,17 +1,14 @@
 package go_binance
 
 import (
-
 	"fmt"
 	"github.com/redlon23/go-binance/models"
-	"github.com/sirupsen/logrus"
 	"log"
-	"os"
 )
 
 type BinanceAccess struct {
-	Api BinanceFuturesApi
-	WebSocket BinanceFuturesWebSocket
+	Api BinanceFutures
+	WebSocket BinanceFutureSocket
 }
 
 func (ba *BinanceAccess) SetApiKeys(public, secret string) {
@@ -29,26 +26,11 @@ func(ba *BinanceAccess) UseTestNet() {
 }
 
 func (ba *BinanceAccess) PrepareLoggers() {
-	ba.Api.Logger = logrus.New()
-	ba.WebSocket.Logger = logrus.New()
-	ba.Api.Logger.Formatter = new(logrus.JSONFormatter)
-	ba.WebSocket.Logger.Formatter = new(logrus.JSONFormatter)
 	// Check log folder and create if it doesn't exists
 	CheckLogsFolder()
 
-	apilogs, err := os.OpenFile("logs/binance_api.log", os.O_CREATE|os.O_WRONLY, 0666)
-	if err == nil {
-		ba.Api.Logger.SetOutput(apilogs)
-	} else {
-		fmt.Println("Failed to log to file for binance api calls, using default stderr")
-	}
-
-	wslogs, err := os.OpenFile("logs/binance_ws.log", os.O_CREATE|os.O_WRONLY, 0666)
-	if err == nil {
-		ba.WebSocket.Logger.SetOutput(wslogs)
-	} else {
-		fmt.Println("Failed to log to file for binance websocket, using default stderr")
-	}
+	ba.Api.PrepareLoggers()
+	ba.WebSocket.PrepareLoggers()
 }
 
 
@@ -85,7 +67,7 @@ func(ba *BinanceAccess) PrepareAccessWithUserStream() {
 func (ba *BinanceAccess) TestUserStream(positionChannel, orderChannel, priceChannel chan []byte) {
 	_ = ba.WebSocket.SubscribeSymbolTickerStream("BTCUSDT")
 	for {
-		_, message, err := ba.WebSocket.Connection.ReadMessage()
+		_, message, err := ba.WebSocket.ReadFromConnection()
 		if err != nil {
 			log.Println("Error occurred while reading message from the connection", err)
 		} else {

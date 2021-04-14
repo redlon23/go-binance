@@ -6,6 +6,7 @@ import (
 	"github.com/redlon23/go-binance/models"
 	"github.com/sirupsen/logrus"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -24,6 +25,19 @@ type BinanceFuturesWebSocket struct {
 	Logger *logrus.Logger
 }
 
+func (bfws *BinanceFuturesWebSocket) PrepareLoggers()  {
+	bfws.Logger = logrus.New()
+	bfws.Logger.Formatter = new(logrus.JSONFormatter)
+
+
+	wslogs, err := os.OpenFile("logs/binance_ws.log", os.O_CREATE|os.O_WRONLY, 0666)
+	if err == nil {
+		bfws.Logger.SetOutput(wslogs)
+	} else {
+		fmt.Println("Failed to log to file for binance websocket, using default stderr")
+	}
+}
+
 func (bfws *BinanceFuturesWebSocket) UseMainNet() {
 	bfws.BaseUrl = baseNetWSURL
 }
@@ -38,7 +52,7 @@ func (bfws *BinanceFuturesWebSocket) IncrementSubscribeIdCounter() {
 
 // Starts a websocket connection with default ping handler.
 func (bfws *BinanceFuturesWebSocket) OpenWebSocketConnection() error  {
-	connection, _, err := websocket.DefaultDialer.Dial(baseNetWSURL, nil)
+	connection, _, err := websocket.DefaultDialer.Dial(bfws.BaseUrl, nil)
 	if err != nil {
 		log.Println("Default Dialer, had an error during initial dial, ", err)
 		return err
@@ -100,4 +114,8 @@ func (bfws BinanceFuturesWebSocket) SubscribeBookTickerStream(symbol string) err
 
 func (bfws BinanceFuturesWebSocket) SubscribeSymbolTickerStream(symbol string) error {
 	return bfws.SubscribeToStream(symbol, symbolTickerName)
+}
+
+func (bfws BinanceFuturesWebSocket) ReadFromConnection() (messageType int, p []byte, err error) {
+	return bfws.Connection.ReadMessage()
 }

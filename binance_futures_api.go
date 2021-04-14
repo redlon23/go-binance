@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
@@ -70,6 +71,18 @@ type BinanceFuturesApi struct {
 	PublicKey string
 	SecretKey string
 	Logger *logrus.Logger
+}
+
+func (bfa *BinanceFuturesApi) PrepareLoggers() {
+	bfa.Logger = logrus.New()
+	bfa.Logger.Formatter = new(logrus.JSONFormatter)
+
+	apilogs, err := os.OpenFile("logs/binance_api.log", os.O_CREATE|os.O_WRONLY, 0666)
+	if err == nil {
+		bfa.Logger.SetOutput(apilogs)
+	} else {
+		fmt.Println("Failed to log to file for binance api calls, using default stderr")
+	}
 }
 
 func (bfa *BinanceFuturesApi) SetApiKeys(public, secret string) {

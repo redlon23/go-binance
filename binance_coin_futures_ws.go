@@ -116,3 +116,7 @@ func (bfcws BinanceFuturesCoinWebSocket) SubscribeSymbolTickerStream(symbol stri
 func (bfcws BinanceFuturesCoinWebSocket) ReadFromConnection() (messageType int, p []byte, err error) {
 	return bfcws.Connection.ReadMessage()
 }
+
+func (bfcws *BinanceFuturesCoinWebSocket) CloseConnection() error  {
+	return bfcws.Connection.Close()
+}

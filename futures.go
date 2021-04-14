@@ -38,4 +38,5 @@ type BinanceFutureSocket interface {
 
 	// ReadFromConnection important part
 	ReadFromConnection() (messageType int, p []byte, err error)
+	CloseConnection() error
 }

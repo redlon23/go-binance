@@ -119,7 +119,6 @@ func (bcfa BinanceCoinFuturesApi) doPublicRequest(httpVerb, endPoint string, par
 	if parameters != nil {
 		fullURL += "?" + parameters.Encode()
 	}
-	fmt.Println(fullURL)
 	request, _ := http.NewRequest(httpVerb, fullURL, nil)
 	response, err := bcfa.Client.Do(request)
 	if err != nil {

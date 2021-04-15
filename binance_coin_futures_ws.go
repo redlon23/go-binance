@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	baseNetWSURLCoin        	= "wss://fstream.binance.com/ws/"
-	testNetWSURLCoin			= "wss://stream.binancefuture.com/ws/"
+	baseNetWSURLCoin        	= "wss://dstream.binance.com/ws/"
+	testNetWSURLCoin			= "wss://dstream.binancefuture.com/ws/"
 )
 
 type BinanceFuturesCoinWebSocket struct {

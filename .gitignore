@@ -17,3 +17,6 @@
 .idea
 /logs
 logs
+Makefile
+main
+todo.md

@@ -20,57 +20,55 @@ import (
 
 const (
 	// ====== URL & END POINTS ======
-	mainNetBaseURL     				= "https://fapi.binance.com"
-	testNetBaseURL     				= "https://testnet.binancefuture.com"
+	mainNetBaseURL = "https://fapi.binance.com"
+	testNetBaseURL = "https://testnet.binancefuture.com"
 
-	ticker24HrEndPoint 				= "/fapi/v1/ticker/24hr"
-	listenKeyEndPoint     			= "/fapi/v1/listenKey"
-	orderEndPoint	   				= "/fapi/v1/order"
-	exchangeInformationEndPoint 	= "/fapi/v1/exchangeInfo"
-	orderBookEndpoint 				= "/fapi/v1/depth"
-	klinesEndpoint					= "/fapi/v1/klines"
-	futuresAccountBalanceEndpoint 	= "/fapi/v2/balance"
-	accountInformationEndpoint 		= "/fapi/v2/account"
-	allOpenOrdersEndPoint 			= "/fapi/v1/allOpenOrders"
+	ticker24HrEndPoint            = "/fapi/v1/ticker/24hr"
+	listenKeyEndPoint             = "/fapi/v1/listenKey"
+	orderEndPoint                 = "/fapi/v1/order"
+	exchangeInformationEndPoint   = "/fapi/v1/exchangeInfo"
+	orderBookEndpoint             = "/fapi/v1/depth"
+	klinesEndpoint                = "/fapi/v1/klines"
+	futuresAccountBalanceEndpoint = "/fapi/v2/balance"
+	accountInformationEndpoint    = "/fapi/v2/account"
+	allOpenOrdersEndPoint         = "/fapi/v1/allOpenOrders"
 
 	// ====== Parameter Types ======
-	SideBuy 			= "BUY"
-	SideSell 			= "SELL"
+	SideBuy  = "BUY"
+	SideSell = "SELL"
 
-	OrderTypeLimit 		= "LIMIT"
-	OrderTypeMarket 	= "MARKET"
-	GoodTillCancel 		= "GTC"
-	GoodTillCrossing 	= "GTX"
+	OrderTypeLimit      = "LIMIT"
+	OrderTypeMarket     = "MARKET"
+	GoodTillCancel      = "GTC"
+	GoodTillCrossing    = "GTX"
 	OrderTypeStopMarket = "STOP_MARKET"
-	OrderTypeStop		= "STOP"
+	OrderTypeStop       = "STOP"
 
 	DefaultOrderBookLimit = 500
 	DefaultKlineLimit     = 500
 
-	KlineInterval1Min 	= "1m"
-	KlineInterval3Min 	= "3m"
-	KlineInterval5Min 	= "5m"
-	KlineInterval15Min 	= "15m"
-	KlineInterval30Min 	= "30m"
-	KlineInterval1Hour 	= "1h"
-	KlineInterval4Hour 	= "4h"
-	KlineInterval6Hour 	= "6h"
-	KlineInterval8Hour 	= "8h"
+	KlineInterval1Min   = "1m"
+	KlineInterval3Min   = "3m"
+	KlineInterval5Min   = "5m"
+	KlineInterval15Min  = "15m"
+	KlineInterval30Min  = "30m"
+	KlineInterval1Hour  = "1h"
+	KlineInterval4Hour  = "4h"
+	KlineInterval6Hour  = "6h"
+	KlineInterval8Hour  = "8h"
 	KlineInterval12Hour = "12h"
-	KlineIntervalDay = "1d"
-	KlineInterval3Day = "3d"
-	KlineIntervalWeek = "1w"
-	KlineIntervalMonth = "1M"
+	KlineIntervalDay    = "1d"
+	KlineInterval3Day   = "3d"
+	KlineIntervalWeek   = "1w"
+	KlineIntervalMonth  = "1M"
 )
 
-
-
 type BinanceFuturesApi struct {
-	Client *http.Client
-	BaseUrl string
+	Client    *http.Client
+	BaseUrl   string
 	PublicKey string
 	SecretKey string
-	Logger *logrus.Logger
+	Logger    *logrus.Logger
 }
 
 func (bfa *BinanceFuturesApi) PrepareLoggers() {
@@ -96,9 +94,9 @@ func (bfa *BinanceFuturesApi) NewNetClient() {
 		DialContext: (&net.Dialer{
 			Timeout: 2 * time.Second,
 		}).DialContext,
-		DisableKeepAlives: false,
+		DisableKeepAlives:   false,
 		TLSHandshakeTimeout: 2 * time.Second,
-		ForceAttemptHTTP2:     true,
+		ForceAttemptHTTP2:   true,
 	}
 	bfa.Client = &http.Client{
 		Timeout:   0,
@@ -114,10 +112,10 @@ func (bfa *BinanceFuturesApi) NewNetClientHTTP2() {
 	}
 }
 
-func(bfa *BinanceFuturesApi) UseMainNet() {
+func (bfa *BinanceFuturesApi) UseMainNet() {
 	bfa.BaseUrl = mainNetBaseURL
 }
-func(bfa *BinanceFuturesApi) UseTestNet() {
+func (bfa *BinanceFuturesApi) UseTestNet() {
 	bfa.BaseUrl = testNetBaseURL
 }
 
@@ -163,7 +161,7 @@ func (bfa BinanceFuturesApi) doPublicRequest(httpVerb, endPoint string, paramete
 	// Log rate limit for debug purposes
 	// Even if request results in non 2xx status it provides
 	// rate limit information
-	bfa.Logger.Println(endPoint + ", rate limit used: ",
+	bfa.Logger.Println(endPoint+", rate limit used: ",
 		response.Header.Get("X-Mbx-Used-Weight-1m"))
 
 	data, err := bfa.parseResponseBody(response.Body)
@@ -180,8 +178,8 @@ func (bfa BinanceFuturesApi) doPublicRequest(httpVerb, endPoint string, paramete
 		}
 		err = &RequestError{
 			StatusCode: response.StatusCode,
-			UrlUsed: 	fullURL,
-			Message:   	*bem,
+			UrlUsed:    fullURL,
+			Message:    *bem,
 		}
 		bfa.Logger.Error(endPoint, err.Error())
 		return nil, err
@@ -193,7 +191,7 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 	signature := bfa.signParameters(&parameters)
 	headers := make(http.Header)
 	headers.Add("X-MBX-APIKEY", bfa.PublicKey)
-	fullURL := bfa.BaseUrl + endPoint + "?" + parameters.Encode() +"&signature=" + signature
+	fullURL := bfa.BaseUrl + endPoint + "?" + parameters.Encode() + "&signature=" + signature
 	request, _ := http.NewRequest(httpVerb, fullURL, nil)
 	request.Header = headers
 	response, err := bfa.Client.Do(request)
@@ -206,7 +204,7 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 	// Log rate limit for debug purposes
 	// Even if request results in non 2xx status it provides
 	// rate limit information
-	bfa.Logger.Println(endPoint + ", rate limit used: ",
+	bfa.Logger.Println(endPoint+", rate limit used: ",
 		response.Header.Get("X-Mbx-Used-Weight-1m"))
 
 	data, err := bfa.parseResponseBody(response.Body)
@@ -223,8 +221,8 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 		}
 		err = &RequestError{
 			StatusCode: response.StatusCode,
-			UrlUsed: 	fullURL,
-			Message:   	*bem,
+			UrlUsed:    fullURL,
+			Message:    *bem,
 		}
 		bfa.Logger.Error(endPoint, err.Error())
 		return nil, err
@@ -235,24 +233,26 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 // ======================= PUBLIC API CALLS ================================
 
 // 	Contains weighted average price (vwap)
+// TESTED
 func (bfa BinanceFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	return bfa.doPublicRequest("GET", ticker24HrEndPoint, parameters)
 }
 
-func (bfa BinanceFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error)  {
+func (bfa BinanceFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("limit", fmt.Sprintf("%d", limit))
 	return bfa.doPublicRequest("GET", orderBookEndpoint, parameters)
 }
 
-func(bfa BinanceFuturesApi) GetExchangeInformation() ([]byte, error) {
+func (bfa BinanceFuturesApi) GetExchangeInformation() ([]byte, error) {
 	return bfa.doPublicRequest("GET", exchangeInformationEndPoint, nil)
 }
+
 // limit can be just 1 if only current candle is needed.
-func(bfa BinanceFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
+func (bfa BinanceFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("interval", interval)
@@ -270,12 +270,12 @@ func (bfa BinanceFuturesApi) GetUserStreamKey() ([]byte, error) {
 // It's recommended to send a ping about every 60 minutes.
 // returns no information, it is completely fine to ignore the byte slice
 func (bfa BinanceFuturesApi) UpdateKeepAliveUserStream() ([]byte, error) {
-	return  bfa.doSignedRequest("PUT", listenKeyEndPoint, url.Values{})
+	return bfa.doSignedRequest("PUT", listenKeyEndPoint, url.Values{})
 }
 
 // returns no information, it is completely fine to ignore the byte slice
 func (bfa BinanceFuturesApi) DeleteUserStream() ([]byte, error) {
-	return  bfa.doSignedRequest("DELETE", listenKeyEndPoint, url.Values{})
+	return bfa.doSignedRequest("DELETE", listenKeyEndPoint, url.Values{})
 }
 
 func (bfa BinanceFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) {
@@ -284,7 +284,7 @@ func (bfa BinanceFuturesApi) PlaceLimitOrder(symbol, side string, price, qty flo
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCancel)
-	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("reduceOnly", strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
@@ -296,7 +296,7 @@ func (bfa BinanceFuturesApi) PlacePostOnlyLimitOrder(symbol, side string, price,
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCrossing)
-	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("reduceOnly", strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
@@ -307,7 +307,7 @@ func (bfa BinanceFuturesApi) PlaceMarketOrder(symbol, side string, qty float64, 
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeMarket)
-	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("reduceOnly", strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	return bfa.doSignedRequest("POST", orderEndPoint, parameters)
 }

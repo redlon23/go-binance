@@ -27,7 +27,7 @@ func ParseMetaInformation(wsMessage []byte) (*models.StreamMetaMessage, error) {
 	return meta, nil
 }
 
-// Checks if log folder exists, if not creates one
+// CheckLogsFolder Checks if log folder exists, if not creates one
 func CheckLogsFolder() {
 	if _, err := os.Stat("./logs"); os.IsNotExist(err) {
 		fmt.Println("No logs folder in the current directory, creating one...")

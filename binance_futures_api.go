@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/redlon23/go-binance/models"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"io"
@@ -240,11 +241,22 @@ func (bfa BinanceFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string)
 	return bfa.doPublicRequest("GET", ticker24HrEndPoint, parameters)
 }
 
-func (bfa BinanceFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error) {
+func (bfa BinanceFuturesApi) GetOrderBook(symbol string, limit int) (models.OrderBook, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("limit", fmt.Sprintf("%d", limit))
-	return bfa.doPublicRequest("GET", orderBookEndpoint, parameters)
+	resp, err := bfa.doPublicRequest("GET", orderBookEndpoint, parameters)
+	orderBook := models.OrderBook{}
+	if err != nil {
+		// todo: add logger here
+		return orderBook, err
+	}
+	err = json.Unmarshal(resp, &orderBook)
+	if err != nil {
+		// todo: add logger here
+		return orderBook, err
+	}
+	return orderBook, nil
 }
 
 func (bfa BinanceFuturesApi) GetExchangeInformation() ([]byte, error) {
@@ -252,12 +264,23 @@ func (bfa BinanceFuturesApi) GetExchangeInformation() ([]byte, error) {
 }
 
 // limit can be just 1 if only current candle is needed.
-func (bfa BinanceFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
+func (bfa BinanceFuturesApi) GetKlines(symbol, interval string, limit int) (models.Klines, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("interval", interval)
 	parameters.Add("limit", fmt.Sprintf("%d", limit))
-	return bfa.doPublicRequest("GET", klinesEndpoint, parameters)
+	resp, err := bfa.doPublicRequest("GET", klinesEndpoint, parameters)
+	klines := models.Klines{}
+	if err != nil {
+		// todo: add loger here
+		return klines, err
+	}
+	err = json.Unmarshal(resp, &klines)
+	if err != nil {
+		// todo: add logger here
+		return klines, err
+	}
+	return klines, nil
 }
 
 // ======================= SIGNED API CALLS ================================

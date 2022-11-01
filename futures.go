@@ -1,5 +1,7 @@
 package go_binance
 
+import "github.com/redlon23/go-binance/models"
+
 type BinanceFutures interface {
 	SetApiKeys(public, secret string)
 	NewNetClient()
@@ -7,14 +9,14 @@ type BinanceFutures interface {
 	UseMainNet()
 	UseTestNet()
 	Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error)
-	GetOrderBook(symbol string, limit int) ([]byte, error)
+	GetOrderBook(symbol string, limit int) (models.OrderBook, error)
 	GetExchangeInformation() ([]byte, error)
-	GetKlines(symbol, interval string, limit int) ([]byte, error)
+	GetKlines(symbol, interval string, limit int) (models.Klines, error)
 	GetUserStreamKey() ([]byte, error)
 	UpdateKeepAliveUserStream() ([]byte, error)
 	DeleteUserStream() ([]byte, error)
 	PlaceLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error)
-	PlacePostOnlyLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error)	//PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error)
+	PlacePostOnlyLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) //PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error)
 	PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error)
 	PlaceStopMarketOrder(symbol, side string, stopPrice, qty float64) ([]byte, error)
 	CancelSingleOrder(symbol, origClientOrderId string, orderId int64) ([]byte, error)

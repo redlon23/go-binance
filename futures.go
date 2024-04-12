@@ -14,13 +14,15 @@ type BinanceFutures interface {
 	UpdateKeepAliveUserStream() ([]byte, error)
 	DeleteUserStream() ([]byte, error)
 	PlaceLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error)
-	PlacePostOnlyLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error)	//PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error)
+	PlacePostOnlyLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) //PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error)
 	PlaceMarketOrder(symbol, side string, qty float64, reduceOnly bool) ([]byte, error)
 	PlaceStopMarketOrder(symbol, side string, stopPrice, qty float64) ([]byte, error)
 	CancelSingleOrder(symbol, origClientOrderId string, orderId int64) ([]byte, error)
 	CancelAllOrders(symbol string) ([]byte, error)
 	GetAccountBalance() ([]byte, error)
 	GetAccountInformation() ([]byte, error)
+	GetPositionInformation(symbol string) ([]byte, error)
+	GetTradeList(symbol, startTime, endTime, limit string) ([]byte, error)
 	PrepareLoggers()
 }
 

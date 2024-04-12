@@ -32,6 +32,8 @@ const (
 	futuresAccountBalanceEndpoint = "/fapi/v2/balance"
 	accountInformationEndpoint    = "/fapi/v2/account"
 	allOpenOrdersEndPoint         = "/fapi/v1/allOpenOrders"
+	positionInformation           = "/fapi/v2/positionRisk"
+	tradeList                     = "/fapi/v1/userTrades"
 
 	// ====== Parameter Types ======
 	SideBuy  = "BUY"
@@ -232,7 +234,8 @@ func (bfa BinanceFuturesApi) doSignedRequest(httpVerb, endPoint string, paramete
 
 // ======================= PUBLIC API CALLS ================================
 
-// 	Contains weighted average price (vwap)
+//	Contains weighted average price (vwap)
+//
 // TESTED
 func (bfa BinanceFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
 	parameters := url.Values{}
@@ -349,4 +352,19 @@ func (bfa BinanceFuturesApi) GetAccountBalance() ([]byte, error) {
 
 func (bfa BinanceFuturesApi) GetAccountInformation() ([]byte, error) {
 	return bfa.doSignedRequest("GET", accountInformationEndpoint, url.Values{})
+}
+
+func (bfa BinanceFuturesApi) GetPositionInformation(symbol string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	return bfa.doSignedRequest("GET", positionInformation, parameters)
+}
+
+func (bfa BinanceFuturesApi) GetTradeList(symbol, startTime, endTime, limit string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("startTime", startTime)
+	parameters.Add("endTime", endTime)
+	parameters.Add("limit", limit)
+	return bfa.doSignedRequest("GET", tradeList, parameters)
 }

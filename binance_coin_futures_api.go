@@ -19,25 +19,27 @@ import (
 )
 
 const (
-	mainNetBaseURLCoin 		= "https://dapi.binance.com"
-	testNetBaseURLCoin 		= "https://testnet.binancefuture.com"
-	ticker24HrEndPointCoin 	= "/dapi/v1/ticker/24hr"
-	orderBookEndPointCoin 	= "/dapi/v1/depth"
-	exchangeInformationEndPointCoin 	= "/dapi/v1/exchangeInfo"
-	klinesEndpointCoin 	= "/dapi/v1/klines"
-	listenKeyEndPointCoin 	= "/dapi/v1/listenKey"
-	orderEndPointCoin 	= "/dapi/v1/order"
-	allOpenOrdersEndPointCoin 	= "/dapi/v1/allOpenOrders"
-	futuresAccountBalanceEndpointCoin 	= "/dapi/v1/balance"
-	accountInformationEndpointCoin 	= "/dapi/v1/account"
+	mainNetBaseURLCoin                = "https://dapi.binance.com"
+	testNetBaseURLCoin                = "https://testnet.binancefuture.com"
+	ticker24HrEndPointCoin            = "/dapi/v1/ticker/24hr"
+	orderBookEndPointCoin             = "/dapi/v1/depth"
+	exchangeInformationEndPointCoin   = "/dapi/v1/exchangeInfo"
+	klinesEndpointCoin                = "/dapi/v1/klines"
+	listenKeyEndPointCoin             = "/dapi/v1/listenKey"
+	orderEndPointCoin                 = "/dapi/v1/order"
+	allOpenOrdersEndPointCoin         = "/dapi/v1/allOpenOrders"
+	futuresAccountBalanceEndpointCoin = "/dapi/v1/balance"
+	accountInformationEndpointCoin    = "/dapi/v1/account"
+	positionInformationCoin           = "/dapi/v1/positionRisk"
+	tradeListCoin                     = "/dapi/v1/userTrades"
 )
 
 type BinanceCoinFuturesApi struct {
-	Client *http.Client
-	BaseUrl string
+	Client    *http.Client
+	BaseUrl   string
 	PublicKey string
 	SecretKey string
-	Logger *logrus.Logger
+	Logger    *logrus.Logger
 }
 
 func (bcfa *BinanceCoinFuturesApi) PrepareLoggers() {
@@ -63,9 +65,9 @@ func (bcfa *BinanceCoinFuturesApi) NewNetClient() {
 		DialContext: (&net.Dialer{
 			Timeout: 2 * time.Second,
 		}).DialContext,
-		DisableKeepAlives: false,
+		DisableKeepAlives:   false,
 		TLSHandshakeTimeout: 2 * time.Second,
-		ForceAttemptHTTP2:     true,
+		ForceAttemptHTTP2:   true,
 	}
 	bcfa.Client = &http.Client{
 		Timeout:   0,
@@ -81,10 +83,10 @@ func (bcfa *BinanceCoinFuturesApi) NewNetClientHTTP2() {
 	}
 }
 
-func(bcfa *BinanceCoinFuturesApi) UseMainNet() {
+func (bcfa *BinanceCoinFuturesApi) UseMainNet() {
 	bcfa.BaseUrl = mainNetBaseURLCoin
 }
-func(bcfa *BinanceCoinFuturesApi) UseTestNet() {
+func (bcfa *BinanceCoinFuturesApi) UseTestNet() {
 	bcfa.BaseUrl = testNetBaseURLCoin
 }
 
@@ -130,7 +132,7 @@ func (bcfa BinanceCoinFuturesApi) doPublicRequest(httpVerb, endPoint string, par
 	// Log rate limit for debug purposes
 	// Even if request results in non 2xx status it provides
 	// rate limit information
-	bcfa.Logger.Println(endPoint + ", rate limit used: ",
+	bcfa.Logger.Println(endPoint+", rate limit used: ",
 		response.Header.Get("X-Mbx-Used-Weight-1m"))
 
 	data, err := bcfa.parseResponseBody(response.Body)
@@ -147,8 +149,8 @@ func (bcfa BinanceCoinFuturesApi) doPublicRequest(httpVerb, endPoint string, par
 		}
 		err = &RequestError{
 			StatusCode: response.StatusCode,
-			UrlUsed: 	fullURL,
-			Message:   	*bem,
+			UrlUsed:    fullURL,
+			Message:    *bem,
 		}
 		bcfa.Logger.Error(endPoint, err.Error())
 		return nil, err
@@ -160,7 +162,7 @@ func (bcfa BinanceCoinFuturesApi) doSignedRequest(httpVerb, endPoint string, par
 	signature := bcfa.signParameters(&parameters)
 	headers := make(http.Header)
 	headers.Add("X-MBX-APIKEY", bcfa.PublicKey)
-	fullURL := bcfa.BaseUrl + endPoint + "?" + parameters.Encode() +"&signature=" + signature
+	fullURL := bcfa.BaseUrl + endPoint + "?" + parameters.Encode() + "&signature=" + signature
 	request, _ := http.NewRequest(httpVerb, fullURL, nil)
 	request.Header = headers
 	response, err := bcfa.Client.Do(request)
@@ -173,7 +175,7 @@ func (bcfa BinanceCoinFuturesApi) doSignedRequest(httpVerb, endPoint string, par
 	// Log rate limit for debug purposes
 	// Even if request results in non 2xx status it provides
 	// rate limit information
-	bcfa.Logger.Println(endPoint + ", rate limit used: ",
+	bcfa.Logger.Println(endPoint+", rate limit used: ",
 		response.Header.Get("X-Mbx-Used-Weight-1m"))
 
 	data, err := bcfa.parseResponseBody(response.Body)
@@ -190,8 +192,8 @@ func (bcfa BinanceCoinFuturesApi) doSignedRequest(httpVerb, endPoint string, par
 		}
 		err = &RequestError{
 			StatusCode: response.StatusCode,
-			UrlUsed: 	fullURL,
-			Message:   	*bem,
+			UrlUsed:    fullURL,
+			Message:    *bem,
 		}
 		bcfa.Logger.Error(endPoint, err.Error())
 		return nil, err
@@ -199,18 +201,18 @@ func (bcfa BinanceCoinFuturesApi) doSignedRequest(httpVerb, endPoint string, par
 	return data, nil
 }
 
-func(bcfa BinanceCoinFuturesApi) GetExchangeInformation() ([]byte, error) {
+func (bcfa BinanceCoinFuturesApi) GetExchangeInformation() ([]byte, error) {
 	return bcfa.doPublicRequest("GET", exchangeInformationEndPointCoin, nil)
 }
 
-// 	Contains weighted average price (vwap)
+// Contains weighted average price (vwap)
 func (bcfa BinanceCoinFuturesApi) Get24HourTickerPriceChangeStatistics(symbol string) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	return bcfa.doPublicRequest("GET", ticker24HrEndPointCoin, parameters)
 }
 
-func (bcfa BinanceCoinFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error)  {
+func (bcfa BinanceCoinFuturesApi) GetOrderBook(symbol string, limit int) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("limit", fmt.Sprintf("%d", limit))
@@ -218,7 +220,7 @@ func (bcfa BinanceCoinFuturesApi) GetOrderBook(symbol string, limit int) ([]byte
 }
 
 // limit can be just 1 if only current candle is needed.
-func(bcfa BinanceCoinFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
+func (bcfa BinanceCoinFuturesApi) GetKlines(symbol, interval string, limit int) ([]byte, error) {
 	parameters := url.Values{}
 	parameters.Add("symbol", symbol)
 	parameters.Add("interval", interval)
@@ -235,12 +237,12 @@ func (bcfa BinanceCoinFuturesApi) GetUserStreamKey() ([]byte, error) {
 // It's recommended to send a ping about every 60 minutes.
 // returns no information, it is completely fine to ignore the byte slice
 func (bcfa BinanceCoinFuturesApi) UpdateKeepAliveUserStream() ([]byte, error) {
-	return  bcfa.doSignedRequest("PUT", listenKeyEndPointCoin, url.Values{})
+	return bcfa.doSignedRequest("PUT", listenKeyEndPointCoin, url.Values{})
 }
 
 // returns no information, it is completely fine to ignore the byte slice
 func (bcfa BinanceCoinFuturesApi) DeleteUserStream() ([]byte, error) {
-	return  bcfa.doSignedRequest("DELETE", listenKeyEndPointCoin, url.Values{})
+	return bcfa.doSignedRequest("DELETE", listenKeyEndPointCoin, url.Values{})
 }
 
 func (bcfa BinanceCoinFuturesApi) PlaceLimitOrder(symbol, side string, price, qty float64, reduceOnly bool) ([]byte, error) {
@@ -249,7 +251,7 @@ func (bcfa BinanceCoinFuturesApi) PlaceLimitOrder(symbol, side string, price, qt
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCancel)
-	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("reduceOnly", strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
 	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
@@ -261,7 +263,7 @@ func (bcfa BinanceCoinFuturesApi) PlacePostOnlyLimitOrder(symbol, side string, p
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeLimit)
 	parameters.Add("timeInForce", GoodTillCrossing)
-	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("reduceOnly", strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	parameters.Add("price", strconv.FormatFloat(price, 'f', -1, 64))
 	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
@@ -272,7 +274,7 @@ func (bcfa BinanceCoinFuturesApi) PlaceMarketOrder(symbol, side string, qty floa
 	parameters.Add("symbol", symbol)
 	parameters.Add("side", side)
 	parameters.Add("type", OrderTypeMarket)
-	parameters.Add("reduceOnly",  strconv.FormatBool(reduceOnly))
+	parameters.Add("reduceOnly", strconv.FormatBool(reduceOnly))
 	parameters.Add("quantity", strconv.FormatFloat(qty, 'f', -1, 64))
 	return bcfa.doSignedRequest("POST", orderEndPointCoin, parameters)
 }
@@ -314,4 +316,19 @@ func (bcfa BinanceCoinFuturesApi) GetAccountBalance() ([]byte, error) {
 
 func (bcfa BinanceCoinFuturesApi) GetAccountInformation() ([]byte, error) {
 	return bcfa.doSignedRequest("GET", accountInformationEndpointCoin, url.Values{})
+}
+
+func (bfa BinanceCoinFuturesApi) GetPositionInformation(symbol string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	return bfa.doSignedRequest("GET", positionInformationCoin, parameters)
+}
+
+func (bfa BinanceCoinFuturesApi) GetTradeList(symbol, startTime, endTime, limit string) ([]byte, error) {
+	parameters := url.Values{}
+	parameters.Add("symbol", symbol)
+	parameters.Add("startTime", startTime)
+	parameters.Add("endTime", endTime)
+	parameters.Add("limit", limit)
+	return bfa.doSignedRequest("GET", tradeListCoin, parameters)
 }
